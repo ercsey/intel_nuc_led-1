@@ -146,17 +146,17 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff,
 
         // Move buffer from user space to kernel space
         input = vmalloc(len);
-        if (!input){
+        if (!input) {
                 return -ENOMEM;
         }
 
-        if (copy_from_user(input, buff, len)){
+        if (copy_from_user(input, buff, len)) {
                 return -EFAULT;
         }
 
         // Strip new line
         input[len] = '\0';
-        if (input[len - 1] == '\n'){
+        if (input[len - 1] == '\n') {
                 input[len - 1] = '\0';
         }
 
@@ -337,20 +337,20 @@ static ssize_t acpi_proc_read(struct file *filp, char __user *buff,
         // Get power status from WMI interface
         status_pwr = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &power_led);
         // Process state for power LED
-        if (status_pwr){
+        if (status_pwr) {
                 pr_warn("Unable to get NUC power LED state\n");
                 sprintf(get_buffer_end(), "Power LED state could not be determined: WMI call failed\n\n");
-        } else{
+        } else {
                 print_power_state_to_buffer(power_led);
         }
 
         // Get ring status from WMI interface
         status_ring = nuc_led_get_state(NUCLED_WMI_RING_LED_ID, &ring_led);
         // Process state for ring LED
-        if (status_ring){
+        if (status_ring) {
                 pr_warn("Unable to get NUC ring LED state\n");
                 sprintf(get_buffer_end(), "Ring LED state could not be determined: WMI call failed\n\n");
-        } else{
+        } else {
                 print_ring_state_to_buffer(ring_led);
         }
 
@@ -380,21 +380,21 @@ static int turn_off_led(struct notifier_block *nb, unsigned long action, void *d
         // If this fails we're unlikely to be able to set LED state at all
         // but we attempt to set it to a completely off state.
         status_pwr = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &power_led);
-        if (status_pwr){
+        if (status_pwr) {
                 pr_warn("Unable to get NUC power LED state\n");
                 nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, NUCLED_WMI_ALWAYS_ON, NUCLED_WMI_POWER_COLOR_DISABLE,
                             &retval);
-        } else{
+        } else {
                 nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, power_led.blink_fade, power_led.color_state,
                             &retval);
         }
 
         status_ring = nuc_led_get_state(NUCLED_WMI_RING_LED_ID, &ring_led);
-        if (status_ring){
+        if (status_ring) {
                 pr_warn("Unable to get NUC ring LED state\n");
                 nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, NUCLED_WMI_ALWAYS_ON, NUCLED_WMI_RING_COLOR_DISABLE,
                             &retval);
-        } else{
+        } else {
                 nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, ring_led.blink_fade, ring_led.color_state,
                             &retval);
         }
