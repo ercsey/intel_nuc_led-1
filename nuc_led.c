@@ -93,8 +93,7 @@ static int nuc_led_get_state(u32 led, struct led_get_state_return *state)
 }
 
 /* Set LED state */
-static int nuc_led_set_state(u32 led, u32 brightness, u32 blink_fade, u32 color_state,
-                struct led_set_state_return *retval)
+static int nuc_led_set_state(u32 led, u32 brightness, u32 blink_fade, u32 color_state, struct led_set_state_return *retval)
 {
         struct led_set_state_args args = {
                 .led = led,
@@ -134,8 +133,7 @@ static int nuc_led_set_state(u32 led, u32 brightness, u32 blink_fade, u32 color_
         return 0;
 }
 
-static ssize_t acpi_proc_write(struct file *filp, const char __user *buff,
-                size_t len, loff_t *data)
+static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_t len, loff_t *data)
 {
         int i = 0;
         int ret = 0;
@@ -297,7 +295,8 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff,
         return len;
 }
 
-static void print_power_state_to_buffer(struct led_get_state_return power_led){
+static void print_power_state_to_buffer(struct led_get_state_return power_led)
+{
         if (power_led.return_code == NUCLED_WMI_RETURN_SUCCESS)
                 sprintf(get_buffer_end(), "Power LED Brightness: %d%%\nPower LED Blink/Fade: %s (0x%02x)\nPower LED Color: %s (0x%02x)\n\n",
                   power_led.brightness,
@@ -309,7 +308,8 @@ static void print_power_state_to_buffer(struct led_get_state_return power_led){
                 sprintf(get_buffer_end(), "Power LED state could not be determined: WMI call returned error\n\n");
 }
 
-static void print_ring_state_to_buffer(struct led_get_state_return ring_led){
+static void print_ring_state_to_buffer(struct led_get_state_return ring_led)
+{
         if (ring_led.return_code == NUCLED_WMI_RETURN_SUCCESS)
                 sprintf(get_buffer_end(), "Ring LED Brightness: %d%%\nRing LED Blink/Fade: %s (0x%02x)\nRing LED Color: %s (0x%02x)\n\n",
                         ring_led.brightness,
@@ -321,8 +321,7 @@ static void print_ring_state_to_buffer(struct led_get_state_return ring_led){
                 sprintf(get_buffer_end(), "Ring LED state could not be determined: WMI call returned error\n\n");
 }
 
-static ssize_t acpi_proc_read(struct file *filp, char __user *buff,
-                size_t count, loff_t *off)
+static ssize_t acpi_proc_read(struct file *filp, char __user *buff, size_t count, loff_t *off)
 {
         ssize_t ret;
         static int status_pwr  = 0;
@@ -368,7 +367,8 @@ static struct file_operations proc_acpi_operations = {
 };
 
 /* Turn off all LEDs */
-static int turn_off_led(struct notifier_block *nb, unsigned long action, void *data){
+static int turn_off_led(struct notifier_block *nb, unsigned long action, void *data)
+{
         struct led_get_state_return power_led;
         struct led_get_state_return ring_led;
         static int status_pwr  = 0;
