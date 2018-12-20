@@ -67,15 +67,15 @@ static int nuc_led_get_state(u32 led, struct led_get_state_return *state)
         input.length = (acpi_size) sizeof(args);
         input.pointer = &args;
 
-	      // Per Intel docs, first instance is used (instance is indexed from 0)
+        // Per Intel docs, first instance is used (instance is indexed from 0)
         status = wmi_evaluate_method(NUCLED_WMI_MGMT_GUID, 0, NUCLED_WMI_METHODID_GETSTATE,
                                      &input, &output);
 
         if (ACPI_FAILURE(status))
-	      {
-		            ACPI_EXCEPTION((AE_INFO, status, "wmi_evaluate_method"));
+        {
+                ACPI_EXCEPTION((AE_INFO, status, "wmi_evaluate_method"));
                 return -EIO;
-	      }
+        }
 
         // Always returns a buffer
         obj = (union acpi_object *)output.pointer;
@@ -110,14 +110,14 @@ static int nuc_led_set_state(u32 led, u32 brightness, u32 blink_fade, u32 color_
         input.length = (acpi_size) sizeof(args);
         input.pointer = &args;
 
-	// Per Intel docs, first instance is used (instance is indexed from 0)
+        // Per Intel docs, first instance is used (instance is indexed from 0)
         status = wmi_evaluate_method(NUCLED_WMI_MGMT_GUID, 0, NUCLED_WMI_METHODID_SETSTATE,
                                      &input, &output);
 
         if (ACPI_FAILURE(status)) {
-		            ACPI_EXCEPTION((AE_INFO, status, "wmi_evaluate_method"));
+              ACPI_EXCEPTION((AE_INFO, status, "wmi_evaluate_method"));
                 return -EIO;
-	      }
+        }
 
         // Always returns a buffer
         obj = (union acpi_object *)output.pointer;
@@ -159,7 +159,7 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
         }
 
         // Parse input string
-	      sep = input;
+        sep = input;
         while ((arg = strsep(&sep, ",")) && *arg)
         {
                 switch (i) {
@@ -406,8 +406,8 @@ static int turn_off_led(struct notifier_block *nb, unsigned long action, void *d
 static int __init init_nuc_led(void)
 {
         struct proc_dir_entry *acpi_entry;
-	      kuid_t uid;
-	      kgid_t gid;
+        kuid_t uid;
+        kgid_t gid;
 
         // Make sure LED control WMI GUID exists
         if (!wmi_has_guid(NUCLED_WMI_MGMT_GUID)) {
@@ -416,13 +416,13 @@ static int __init init_nuc_led(void)
         }
 
         // Verify the user parameters
-	      uid = make_kuid(&init_user_ns, nuc_led_uid);
-      	gid = make_kgid(&init_user_ns, nuc_led_gid);
+        uid = make_kuid(&init_user_ns, nuc_led_uid);
+        gid = make_kgid(&init_user_ns, nuc_led_gid);
 
-      	if (!uid_valid(uid) || !gid_valid(gid)) {
+        if (!uid_valid(uid) || !gid_valid(gid)) {
                 pr_warn("Intel NUC LED control driver got an invalid UID or GID\n");
-		            return -EINVAL;
-	      }
+              return -EINVAL;
+        }
 
         // Create nuc_led ACPI proc entry
         acpi_entry = proc_create("nuc_led", nuc_led_perms, acpi_root_dir, &proc_acpi_operations);
