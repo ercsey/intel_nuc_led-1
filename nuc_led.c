@@ -366,10 +366,11 @@ static int turn_off_led(struct notifier_block *nb, unsigned long action, void *d
         static int status_ring = 0;
 
         struct led_set_state_return retval;
-
-        // Try and get LED status then set brightness to 0 while maintaining other settings
-        // If this fails we're unlikely to be able to set LED state at all
-        // but we attempt to set it to a completely off state.
+        /*
+         * Try and get LED status then set brightness to 0 while maintaining other settings
+         * If this fails we're unlikely to be able to set LED state at all
+         * but we attempt to set it to a completely off state.
+         */
         status_pwr = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &power_led);
         if (status_pwr) {
                 pr_warn("Unable to get NUC power LED state\n");
