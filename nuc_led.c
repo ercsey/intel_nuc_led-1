@@ -160,8 +160,7 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
 
         // Parse input string
         sep = input;
-        while ((arg = strsep(&sep, ",")) && *arg)
-        {
+        while ((arg = strsep(&sep, ",")) && *arg) {
                 switch (i) {
                 case 0: // First arg: LED ("power" or "ring")
                         if (!strcmp(arg, "power"))
@@ -176,12 +175,9 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
                         {
                         long val;
 
-                        if (kstrtol(arg, 0, &val))
-                        {
+                        if (kstrtol(arg, 0, &val)){
                                 ret = -EINVAL;
-                        }
-                        else
-                        {
+                        } else {
                                 if (val < 0 || val > 100)
                                         ret = -EINVAL;
                                 else
@@ -210,8 +206,7 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
                         break;
 
                 case 3: // Fourth arg: color (text values)
-                        if (led == NUCLED_WMI_POWER_LED_ID)
-                        {
+                        if (led == NUCLED_WMI_POWER_LED_ID) {
                                 if (!strcmp(arg, "off"))
                                         color_state = NUCLED_WMI_POWER_COLOR_DISABLE;
                                 else if (!strcmp(arg, "blue"))
@@ -220,9 +215,7 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
                                         color_state = NUCLED_WMI_POWER_COLOR_AMBER;
                                 else
                                         ret = -EINVAL;
-                        }
-                        else if (led == NUCLED_WMI_RING_LED_ID)
-                        {
+                        } else if (led == NUCLED_WMI_RING_LED_ID) {
                                 if (!strcmp(arg, "off"))
                                         color_state = NUCLED_WMI_RING_COLOR_DISABLE;
                                 else if (!strcmp(arg, "cyan"))
@@ -252,41 +245,27 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
 
         vfree(input);
 
-        if (ret == -EOVERFLOW)
-        {
+        if (ret == -EOVERFLOW) {
                 pr_warn("Too many arguments while setting NUC LED state\n");
-        }
-        else if (i != 4)
-        {
+        } else if (i != 4) {
                 pr_warn("Too few arguments while setting NUC LED state\n");
-        }
-        else if (ret == -EINVAL)
-        {
+        } else if (ret == -EINVAL) {
                 pr_warn("Invalid argument while setting NUC LED state\n");
-        }
-        else
-        {
+        } else {
                 status = nuc_led_set_state(led, brightness, blink_fade, color_state, &retval);
-                if (status)
-                {
+                if (status) {
                         pr_warn("Unable to set NUC LED state: WMI call failed\n");
-                }
-                else
-                {
-                        if (retval.brightness_return == NUCLED_WMI_RETURN_UNDEFINED)
-                        {
+                } else {
+                        if (retval.brightness_return == NUCLED_WMI_RETURN_UNDEFINED) {
                                 if (led == NUCLED_WMI_POWER_LED_ID)
                                         pr_warn("Unable set NUC power LED state: not set for SW control\n");
                                 else if (led == NUCLED_WMI_RING_LED_ID)
                                         pr_warn("Unable set NUC ring LED state: not set for SW control\n");
-                        }
-                        else if (retval.brightness_return == NUCLED_WMI_RETURN_BADPARAM || retval.blink_fade_return == NUCLED_WMI_RETURN_BADPARAM ||
-                                 retval.color_return == NUCLED_WMI_RETURN_BADPARAM)
-                        {
+                        } else if (retval.brightness_return == NUCLED_WMI_RETURN_BADPARAM ||
+                                   retval.blink_fade_return == NUCLED_WMI_RETURN_BADPARAM ||
+                                   retval.color_return == NUCLED_WMI_RETURN_BADPARAM) {
                                 pr_warn("Unable to set NUC LED state: invalid parameter\n");
-                        }
-                        else if (retval.brightness_return != NUCLED_WMI_RETURN_SUCCESS)
-                        {
+                        } else if (retval.brightness_return != NUCLED_WMI_RETURN_SUCCESS) {
                                 pr_warn("Unable to set NUC LED state: WMI call returned error\n");
                         }
                 }
