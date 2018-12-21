@@ -291,33 +291,31 @@ static void print_led_state_to_buffer(struct led_get_state_return led, char *led
 static ssize_t acpi_proc_read(struct file *filp, char __user *buff, size_t count, loff_t *off)
 {
         ssize_t ret;
-        static int status_pwr  = 0;
-        static int status_ring = 0;
-        struct led_get_state_return power_led;
-        struct led_get_state_return ring_led;
+        static int status  = 0;
+        struct led_get_state_return led_state;
         int len = 0;
 
         // Clear buffer
         memset(result_buffer, 0, BUFFER_SIZE);
 
         // Get power status from WMI interface
-        status_pwr = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &power_led);
+        status = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &led_state);
         // Process state for power LED
-        if (status_pwr) {
+        if (status) {
                 pr_warn("Unable to get NUC power LED state\n");
                 sprintf(get_buffer_end(), "Power LED state could not be determined: WMI call failed\n\n");
         } else {
-                print_led_state_to_buffer(power_led, "Power");
+                print_led_state_to_buffer(led_state, "Power");
         }
 
         // Get ring status from WMI interface
-        status_ring = nuc_led_get_state(NUCLED_WMI_RING_LED_ID, &ring_led);
+        status = nuc_led_get_state(NUCLED_WMI_RING_LED_ID, &led_state);
         // Process state for ring LED
-        if (status_ring) {
+        if (status) {
                 pr_warn("Unable to get NUC ring LED state\n");
                 sprintf(get_buffer_end(), "Ring LED state could not be determined: WMI call failed\n\n");
         } else {
-                print_led_state_to_buffer(ring_led, "Ring");
+                print_led_state_to_buffer(led_state, "Ring");
         }
 
         // Return buffer via proc
