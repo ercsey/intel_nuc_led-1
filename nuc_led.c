@@ -335,9 +335,9 @@ static struct file_operations proc_acpi_operations = {
 static int turn_off_led(struct notifier_block *nb, unsigned long action, void *data)
 {
         struct led_get_state_return led_state;
+        struct led_set_state_return retval;
         static int status  = 0;
 
-        struct led_set_state_return retval;
         /*
          * Try and get LED status then set brightness to 0 while maintaining other settings
          * If this fails we're unlikely to be able to set LED state at all
