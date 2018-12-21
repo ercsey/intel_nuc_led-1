@@ -360,10 +360,8 @@ static struct file_operations proc_acpi_operations = {
 /* Turn off all LEDs */
 static int turn_off_led(struct notifier_block *nb, unsigned long action, void *data)
 {
-        struct led_get_state_return power_led;
-        struct led_get_state_return ring_led;
-        static int status_pwr  = 0;
-        static int status_ring = 0;
+        struct led_get_state_return led_state;
+        static int status  = 0;
 
         struct led_set_state_return retval;
         /*
@@ -371,24 +369,24 @@ static int turn_off_led(struct notifier_block *nb, unsigned long action, void *d
          * If this fails we're unlikely to be able to set LED state at all
          * but we attempt to set it to a completely off state.
          */
-        status_pwr = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &power_led);
-        if (status_pwr) {
+        status = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &led_state);
+        if (status) {
                 pr_warn("Unable to get NUC power LED state\n");
                 nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, NUCLED_WMI_ALWAYS_ON,
                                   NUCLED_WMI_POWER_COLOR_DISABLE, &retval);
         } else {
-                nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, power_led.blink_fade,
-                                  power_led.color_state, &retval);
+                nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, led_state.blink_fade,
+                                  led_state.color_state, &retval);
         }
 
-        status_ring = nuc_led_get_state(NUCLED_WMI_RING_LED_ID, &ring_led);
-        if (status_ring) {
+        status = nuc_led_get_state(NUCLED_WMI_RING_LED_ID, &led_state);
+        if (status) {
                 pr_warn("Unable to get NUC ring LED state\n");
                 nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, NUCLED_WMI_ALWAYS_ON,
                                   NUCLED_WMI_RING_COLOR_DISABLE, &retval);
         } else {
-                nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, ring_led.blink_fade,
-                                  ring_led.color_state, &retval);
+                nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, led_state.blink_fade,
+                                  led_state.color_state, &retval);
         }
 
         return NOTIFY_OK;
