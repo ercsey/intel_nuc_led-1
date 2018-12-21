@@ -133,14 +133,116 @@ static int nuc_led_set_state(u32 led, u32 brightness, u32 blink_fade, u32 color_
         return 0;
 }
 
-static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_t len, loff_t *data)
+static int parse_state_input(char *input, struct led_set_state_args *led_state)
 {
         int i = 0;
         int ret = 0;
-        char *input, *arg, *sep;
-        static int status  = 0;
+        char *sep, *arg;
+
+        // Parse input string
+        sep = input;
+        while ((arg = strsep(&sep, ",")) && *arg) {
+                switch (i) {
+                case 0: // First arg: LED ("power" or "ring")
+                        if (!strcmp(arg, "power"))
+                                led_state->led = NUCLED_WMI_POWER_LED_ID;
+                        else if (!strcmp(arg, "ring"))
+                                led_state->led = NUCLED_WMI_RING_LED_ID;
+                        else
+                                ret = -EINVAL;
+                        break;
+
+                case 1: // Second arg: brightness (0 - 100)
+                        {
+                        long val;
+
+                        if (kstrtol(arg, 0, &val)){
+                                ret = -EINVAL;
+                        } else {
+                                if (val < 0 || val > 100)
+                                        ret = -EINVAL;
+                                else
+                                        led_state->brightness = val;
+                        }
+                        break;
+                        }
+
+                case 2: // Third arg: fade/brightness (text values)
+                        if (!strcmp(arg, "none"))
+                                led_state->blink_fade = NUCLED_WMI_ALWAYS_ON;
+                        else if (!strcmp(arg, "blink_fast"))
+                                led_state->blink_fade = NUCLED_WMI_BLINK_1HZ;
+                        else if (!strcmp(arg, "blink_medium"))
+                                led_state->blink_fade = NUCLED_WMI_BLINK_0_5HZ;
+                        else if (!strcmp(arg, "blink_slow"))
+                                led_state->blink_fade = NUCLED_WMI_BLINK_0_25HZ;
+                        else if (!strcmp(arg, "fade_fast"))
+                                led_state->blink_fade = NUCLED_WMI_FADE_1HZ;
+                        else if (!strcmp(arg, "fade_medium"))
+                                led_state->blink_fade = NUCLED_WMI_FADE_0_5HZ;
+                        else if (!strcmp(arg, "fade_slow"))
+                                led_state->blink_fade = NUCLED_WMI_FADE_0_25HZ;
+                        else
+                                ret = -EINVAL;
+                        break;
+
+                case 3: // Fourth arg: color (text values)
+                        if (led_state->led == NUCLED_WMI_POWER_LED_ID) {
+                                if (!strcmp(arg, "off"))
+                                        led_state->color_state = NUCLED_WMI_POWER_COLOR_DISABLE;
+                                else if (!strcmp(arg, "blue"))
+                                        led_state->color_state = NUCLED_WMI_POWER_COLOR_BLUE;
+                                else if (!strcmp(arg, "amber"))
+                                        led_state->color_state = NUCLED_WMI_POWER_COLOR_AMBER;
+                                else
+                                        ret = -EINVAL;
+                        } else if (led_state->led == NUCLED_WMI_RING_LED_ID) {
+                                if (!strcmp(arg, "off"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_DISABLE;
+                                else if (!strcmp(arg, "cyan"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_CYAN;
+                                else if (!strcmp(arg, "pink"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_PINK;
+                                else if (!strcmp(arg, "yellow"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_YELLOW;
+                                else if (!strcmp(arg, "blue"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_BLUE;
+                                else if (!strcmp(arg, "red"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_RED;
+                                else if (!strcmp(arg, "green"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_GREEN;
+                                else if (!strcmp(arg, "white"))
+                                        led_state->color_state = NUCLED_WMI_RING_COLOR_WHITE;
+                                else
+                                        ret = -EINVAL;
+                        }
+                        break;
+                default: // Too many args!
+                        ret = -EOVERFLOW;
+                }
+        // Track iterations
+        i++;
+        }
+
+        if (ret == -EOVERFLOW) {
+                pr_warn("Too many arguments while setting NUC LED state\n");
+        } else if (i != 4) {
+                pr_warn("Too few arguments while setting NUC LED state\n");
+                ret = -EINVAL;
+        } else if (ret == -EINVAL) {
+                pr_warn("Invalid argument while setting NUC LED state\n");
+        }
+        return ret;
+}
+
+
+static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_t len, loff_t *data)
+{
+        int ret = 0;
+        char *input;
+        static int status = 0;
         struct led_set_state_return retval;
-        u32 led, brightness, blink_fade, color_state;
+        struct led_set_state_args led_state;
 
         // Move buffer from user space to kernel space
         input = vmalloc(len);
@@ -158,108 +260,22 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
                 input[len - 1] = '\0';
         }
 
-        // Parse input string
-        sep = input;
-        while ((arg = strsep(&sep, ",")) && *arg) {
-                switch (i) {
-                case 0: // First arg: LED ("power" or "ring")
-                        if (!strcmp(arg, "power"))
-                                led = NUCLED_WMI_POWER_LED_ID;
-                        else if (!strcmp(arg, "ring"))
-                                led = NUCLED_WMI_RING_LED_ID;
-                        else
-                                ret = -EINVAL;
-                        break;
-
-                case 1: // Second arg: brightness (0 - 100)
-                        {
-                        long val;
-
-                        if (kstrtol(arg, 0, &val)){
-                                ret = -EINVAL;
-                        } else {
-                                if (val < 0 || val > 100)
-                                        ret = -EINVAL;
-                                else
-                                        brightness = val;
-                        }
-                        break;
-                        }
-
-                case 2: // Third arg: fade/brightness (text values)
-                        if (!strcmp(arg, "none"))
-                                blink_fade = NUCLED_WMI_ALWAYS_ON;
-                        else if (!strcmp(arg, "blink_fast"))
-                                blink_fade = NUCLED_WMI_BLINK_1HZ;
-                        else if (!strcmp(arg, "blink_medium"))
-                                blink_fade = NUCLED_WMI_BLINK_0_5HZ;
-                        else if (!strcmp(arg, "blink_slow"))
-                                blink_fade = NUCLED_WMI_BLINK_0_25HZ;
-                        else if (!strcmp(arg, "fade_fast"))
-                                blink_fade = NUCLED_WMI_FADE_1HZ;
-                        else if (!strcmp(arg, "fade_medium"))
-                                blink_fade = NUCLED_WMI_FADE_0_5HZ;
-                        else if (!strcmp(arg, "fade_slow"))
-                                blink_fade = NUCLED_WMI_FADE_0_25HZ;
-                        else
-                                ret = -EINVAL;
-                        break;
-
-                case 3: // Fourth arg: color (text values)
-                        if (led == NUCLED_WMI_POWER_LED_ID) {
-                                if (!strcmp(arg, "off"))
-                                        color_state = NUCLED_WMI_POWER_COLOR_DISABLE;
-                                else if (!strcmp(arg, "blue"))
-                                        color_state = NUCLED_WMI_POWER_COLOR_BLUE;
-                                else if (!strcmp(arg, "amber"))
-                                        color_state = NUCLED_WMI_POWER_COLOR_AMBER;
-                                else
-                                        ret = -EINVAL;
-                        } else if (led == NUCLED_WMI_RING_LED_ID) {
-                                if (!strcmp(arg, "off"))
-                                        color_state = NUCLED_WMI_RING_COLOR_DISABLE;
-                                else if (!strcmp(arg, "cyan"))
-                                        color_state = NUCLED_WMI_RING_COLOR_CYAN;
-                                else if (!strcmp(arg, "pink"))
-                                        color_state = NUCLED_WMI_RING_COLOR_PINK;
-                                else if (!strcmp(arg, "yellow"))
-                                        color_state = NUCLED_WMI_RING_COLOR_YELLOW;
-                                else if (!strcmp(arg, "blue"))
-                                        color_state = NUCLED_WMI_RING_COLOR_BLUE;
-                                else if (!strcmp(arg, "red"))
-                                        color_state = NUCLED_WMI_RING_COLOR_RED;
-                                else if (!strcmp(arg, "green"))
-                                        color_state = NUCLED_WMI_RING_COLOR_GREEN;
-                                else if (!strcmp(arg, "white"))
-                                        color_state = NUCLED_WMI_RING_COLOR_WHITE;
-                                else
-                                        ret = -EINVAL;
-                        }
-                        break;
-                default: // Too many args!
-                        ret = -EOVERFLOW;
-                }
-        // Track iterations
-        i++;
-        }
+        // Extract args from input
+        ret = parse_state_input(input, &led_state);
 
         vfree(input);
 
-        if (ret == -EOVERFLOW) {
-                pr_warn("Too many arguments while setting NUC LED state\n");
-        } else if (i != 4) {
-                pr_warn("Too few arguments while setting NUC LED state\n");
-        } else if (ret == -EINVAL) {
-                pr_warn("Invalid argument while setting NUC LED state\n");
-        } else {
-                status = nuc_led_set_state(led, brightness, blink_fade, color_state, &retval);
+        if (ret == 0) {
+                status = nuc_led_set_state(led_state.led, led_state.brightness,
+                                           led_state.blink_fade, led_state.color_state,
+                                           &retval);
                 if (status) {
                         pr_warn("Unable to set NUC LED state: WMI call failed\n");
                 } else {
                         if (retval.brightness_return == NUCLED_WMI_RETURN_UNDEFINED) {
-                                if (led == NUCLED_WMI_POWER_LED_ID)
+                                if (led_state.led == NUCLED_WMI_POWER_LED_ID)
                                         pr_warn("Unable set NUC power LED state: not set for SW control\n");
-                                else if (led == NUCLED_WMI_RING_LED_ID)
+                                else if (led_state.led == NUCLED_WMI_RING_LED_ID)
                                         pr_warn("Unable set NUC ring LED state: not set for SW control\n");
                         } else if (retval.brightness_return == NUCLED_WMI_RETURN_BADPARAM ||
                                    retval.blink_fade_return == NUCLED_WMI_RETURN_BADPARAM ||
