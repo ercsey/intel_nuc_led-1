@@ -49,7 +49,7 @@ ACPI_MODULE_NAME("NUC_LED");
 
 static int turn_off_led(struct notifier_block *, unsigned long, void *);
 
-static struct notifier_block nb = {
+static struct notifier_block reboot_notifier = {
 	.notifier_call = turn_off_led
 };
 
@@ -398,7 +398,7 @@ static int __init init_nuc_led(void)
 
         proc_set_user(acpi_entry, uid, gid);
 
-        register_reboot_notifier(&nb);
+        register_reboot_notifier(&reboot_notifier);
 
         pr_info("Intel NUC LED control driver loaded\n");
 
@@ -407,7 +407,7 @@ static int __init init_nuc_led(void)
 
 static void __exit unload_nuc_led(void)
 {
-        unregister_reboot_notifier(&nb);
+        unregister_reboot_notifier(&reboot_notifier);
         remove_proc_entry("nuc_led", acpi_root_dir);
         pr_info("Intel NUC LED control driver unloaded\n");
 }
