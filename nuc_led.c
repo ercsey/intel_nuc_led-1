@@ -373,21 +373,21 @@ static int turn_off_led(struct notifier_block *nb, unsigned long action, void *d
         status_pwr = nuc_led_get_state(NUCLED_WMI_POWER_LED_ID, &power_led);
         if (status_pwr) {
                 pr_warn("Unable to get NUC power LED state\n");
-                nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, NUCLED_WMI_ALWAYS_ON, NUCLED_WMI_POWER_COLOR_DISABLE,
-                            &retval);
+                nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, NUCLED_WMI_ALWAYS_ON,
+                                  NUCLED_WMI_POWER_COLOR_DISABLE, &retval);
         } else {
-                nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, power_led.blink_fade, power_led.color_state,
-                            &retval);
+                nuc_led_set_state(NUCLED_WMI_POWER_LED_ID, 0, power_led.blink_fade,
+                                  power_led.color_state, &retval);
         }
 
         status_ring = nuc_led_get_state(NUCLED_WMI_RING_LED_ID, &ring_led);
         if (status_ring) {
                 pr_warn("Unable to get NUC ring LED state\n");
-                nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, NUCLED_WMI_ALWAYS_ON, NUCLED_WMI_RING_COLOR_DISABLE,
-                            &retval);
+                nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, NUCLED_WMI_ALWAYS_ON,
+                                  NUCLED_WMI_RING_COLOR_DISABLE, &retval);
         } else {
-                nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, ring_led.blink_fade, ring_led.color_state,
-                            &retval);
+                nuc_led_set_state(NUCLED_WMI_RING_LED_ID, 0, ring_led.blink_fade,
+                                  ring_led.color_state, &retval);
         }
 
         return NOTIFY_OK;
