@@ -270,7 +270,6 @@ static ssize_t acpi_proc_write(struct file *filp, const char __user *buff, size_
                         }
                 }
         }
-
         return len;
 }
 
@@ -278,9 +277,7 @@ static void print_led_state_to_buffer(struct led_get_state_return led, char *led
 {
         if (led.return_code == NUCLED_WMI_RETURN_SUCCESS)
                 sprintf(get_buffer_end(), "%s LED Brightness: %d%%\n%s LED Blink/Fade: %s (0x%02x)\n%s LED Color: %s (0x%02x)\n\n",
-                        led_name,
-                        led.brightness,
-                        led_name,
+                        led_name, led.brightness, led_name,
                         blink_fade_text[led.blink_fade], led.blink_fade,
                         led_name,
                         ringcolor_text[led.color_state], led.color_state);
